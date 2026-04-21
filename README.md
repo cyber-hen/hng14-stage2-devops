@@ -37,3 +37,41 @@ docker ps
 # Perform an integration test
 curl -X POST http://localhost:3000/submit
 ```
+---
+
+## 🏃 How to Run Locally
+
+### Prerequisites
+- Docker & Docker Compose installed.
+
+### Setup
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd <project-folder>
+   ```
+2. Create a `.env` file:
+   ```text
+   REDIS_HOST=redis
+   API_URL=http://api:8000
+   ```
+3. Start the services:
+   ```bash
+   docker-compose up -d --build
+   ```
+4. Verify service health:
+   ```bash
+   docker ps
+   ```
+
+### Manual Integration Test
+Submit a job to verify the stack is working:
+```bash
+curl -X POST http://localhost:3000/submit
+```
+Expected output: `{"job_id": "..."}`
+
+---
+
+## 👨‍💻 Author
+**Awoseyi Oluwafunbi Henry** *DevOps & Cloud Engineering Enthusiast*
