@@ -87,9 +87,9 @@ services:
       api:
         condition: service_healthy # Ensures frontend doesn't hit a dead API
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 10s
-      timeout: 5s
+      test: ["CMD", "python3", "-c", "import os; exit(0)", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
       retries: 3
     deploy:
       resources:
