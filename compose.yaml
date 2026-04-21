@@ -1,0 +1,103 @@
+services:
+  # 1. Redis (The Message Broker)
+  redis:
+    image: redis:alpine
+    container_name: redis_service
+    networks:
+      - hng_network
+    # Requirement: Do NOT expose Redis ports to the host machine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.20'
+          memory: 128M
+
+  # 2. Backend API (FastAPI)
+  api:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: api_service
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+    ports:
+      - "8000:8000"
+    networks:
+      - hng_network
+    depends_on:
+      redis:
+        condition: service_healthy # Only starts when Redis is fully READY
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+
+  # 3. Background Worker (Python)
+  worker:
+    build: 
+      context: ./worker
+      dockerfile: Dockerfile
+    container_name: worker_service
+    env_file: .env
+    environment:
+      - REDIS_HOST=redis
+    networks:
+      - hng_network
+    depends_on:
+      redis:
+        condition: service_healthy
+    # Healthcheck for non-web process
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "python worker.py"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+
+  # 4. Frontend (Node.js)
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend_service
+    env_file: .env
+    environment:
+      - API_URL=http://api:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - hng_network
+    depends_on:
+      api:
+        condition: service_healthy # Ensures frontend doesn't hit a dead API
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.30'
+          memory: 128M
+
+# Requirement: All services must communicate over a named internal network
+networks:
+  hng_network:
+    driver: bridge
