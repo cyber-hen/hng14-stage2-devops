@@ -21,6 +21,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y docker-compose
 
+      - name: Create env file for CI
+        run: cp .env.example .env
+
+
       - name: Build and Start Containers
         run: docker-compose up -d --build
         env:
