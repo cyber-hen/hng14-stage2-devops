@@ -7,33 +7,27 @@ on:
     branches: [ main, master ]
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-
-    services:
-      # Optional: You can run Redis as a GitHub service, 
-      # but it's better to test the exact Compose setup.
+    build-and-test:
+      runs-on: ubuntu-latest
       
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+  steps:
+        - name: Checkout Code
+          uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        - name: Set up Docker Buildx
+          uses: docker/setup-buildx-action@v3
 
-      - name: Install Docker Compose
-        run: |
+        - name: Install Docker Compose
+run: |
           sudo apt-get update
-          sudo apt-get install -y docker-compose
-
-      - name: Build and Start Containers
-        run: |
-          docker-compose up -d --build
+          sudo apt-get install -y docker-compose         
+          - name: Build and Start Containers     
+run: |
+        docker-compose up -d --build
         env:
           REDIS_HOST: redis
           API_URL: http://api:8000
-
-      - name: Wait for Healthchecks
+        - name: Wait for Healthchecks
         run: |
           echo "Waiting for services to become healthy..."
           # This loop waits up to 60 seconds for all containers to be healthy
@@ -44,8 +38,7 @@ jobs:
             attempt=$((attempt+1))
             docker ps
           done
-
-      - name: Integration Test - Submit Job
+        - name: Integration Test - Submit Job
         run: |
           RESPONSE=$(curl -s -X POST http://localhost:3000/submit)
           echo "Response: $RESPONSE"
@@ -53,7 +46,6 @@ jobs:
             echo "Job submission failed!"
             exit 1
           fi
-
-      - name: Clean Up
+        - name: Clean Up
         if: always()
         run: docker-compose down
