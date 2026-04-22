@@ -30,13 +30,20 @@ jobs:
       - name: Wait for Healthchecks
         run: |
           echo "Waiting for services to become healthy..."
+          # Increased to 20 attempts (100 seconds total)
           attempt=0
-          until [ $(docker ps | grep "(healthy)" | wc -l) -ge 3 ] || [ $attempt -gt 12 ]; do
-            echo "Waiting..."
+          until [ $(docker ps | grep "(healthy)" | wc -l) -ge 3 ] || [ $attempt -gt 20 ]; do
+            echo "Attempt $attempt: Waiting for containers to be healthy..."
             sleep 5
             attempt=$((attempt+1))
-            docker ps
+            docker ps # This prints the status so you can see which one is failing
           done
+
+          if [ $(docker ps | grep "(healthy)" | wc -l) -lt 3 ]; then
+            echo "Healthcheck timeout reached!"
+            docker compose logs
+            exit 1
+          fi
 
       - name: Integration Test - Submit Job
         run: |
